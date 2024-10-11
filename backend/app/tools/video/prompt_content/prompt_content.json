@@ -1,0 +1,18 @@
+{
+    "partition": null,
+    "name": "Friends",
+    "sections": [
+        {
+            "id": 0,
+            "start": "0:00:00",
+            "end": "0:01:58.201417",
+            "content": "[Video title] Friends\n[Detected objects] bottle, chair, couch, cup, dining table, necktie, potted plant\n[Visual labels] clothing, person, man, human face, woman, indoor, people, furniture, scene, group, suit, table, tie\n[Transcript] Hi.\nHi.\nWhat's wrong buddy?\nSomeone at work ate my sandwich well.\nWhat did the police?\nSay.\nMy Thanksgiving leftover sandwich.\nI can't believe someone just ate it.\nRoss is just a sandwich.\nJust.\nA sandwich.\nLook, I am 30 years old, OK?\nI'm going to be divorced twice and I just got evicted.\nThat sandwich was the only good thing going on in my life.\nSomeone ate the only good thing going on in my Life, OK?\nLook, I I have enough stuff for for one more sandwich.\nI mean, I was going to eat it myself, but.\nI thought that would be incredible.\nThank you so much.\nI I, I still can't believe someone ate it.\nI mean, look, I, I, I left a note and everything.\nKnock, knock.\nWho's there?\nRoss Keller's lunch.\nRoss Keller's lunch.\nWho?\nRoss Keller's lunch.\nPlease don't take me.\nOK, I'm.\nSurprised you didn't go home.\nWhere on your lunch?\nOK, look, you want to hold on to your food?\nYou got to scare people off.\nI learned that living on the street.\nReally so?\nSo what would you say Pheebs?\nStuff like keep your mitts.\nOff my grub.\nSay Ross, when you picture Phoebe living on the street, is she surrounded by the entire cast of Annie?\nOK, this will keep him away from your stuff.\nPhoebe, you are a.\nBadass.\nWell.\nSomeday I'll tell you about the time I stabbed the cop.\nPhoebe.\nWould you stand me first?\nRoss, may I have a word with you?\nOf course, Donald."
+        },
+        {
+            "id": 1,
+            "start": "0:01:58.201417",
+            "end": "0:04:01.950042",
+            "content": "[Video title] Friends\n[Detected objects] cup, necktie, potted plant, wine glass\n[Visual labels] clothing, person, man, human face, indoor, suit, businessperson, wall, building, statue\n[OCR] bs, Subscribe\n[Transcript] We've been getting reports of some very angry behaviour on your part.\nWhat Threatening letters?\nRefusal to meet deadlines?\nApparently people now call you mental.\nWe want you to speak to a psychiatrist.\nOh no.\nYou don't understand.\nOh, this is so silly.\nThis is all just because of a sandwich.\nA sandwich.\nYeah, you see my my sister makes these amazing Turkey sandwiches.\nHer secret is she puts a an extra slice of gravy soaked bread in the middle.\nI call it the moist maker.\nAnyway, I I put my sandwich in the fridge over.\nHere.\nOh, you know what?\nI I'm sorry.\nI I believe I ate that.\nYou ate my sandwich.\nIt was a simple mistake.\nIt could happen to anyone.\nOh.\nReally.\nDid you?\nConfuse it with your own Turkey sandwich with a moist maker.\nNo.\nDo you perhaps remember seeing a note on top of it?\nThere may have been a joke or the America of some kind that.\nSaid it was my sandwich.\nNow, now, calm down.\nCome look in my office.\nSome of it may still be in the trash.\nWhat?\nIt was quite large.\nI I I had to throw most of it away.\nYou.\nYou, you, you threw my sandwich away.\nMy sandwich.\nMy sandwich."
+        }
+    ]
+}
