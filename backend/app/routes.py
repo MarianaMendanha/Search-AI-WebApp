@@ -7,7 +7,7 @@ from multiprocessing.managers import BaseManager
 
 # initialize manager connection
 # NOTE: you might want to handle the password in a less hardcoded way
-manager = BaseManager(address=('127.0.0.1', 5001), authkey=b'password')
+manager = BaseManager(address=('127.0.0.1', 5002), authkey=b'password')
 manager.register('query_index')
 manager.register('insert_into_index')
 manager.register('get_documents_list')
@@ -114,36 +114,46 @@ def upload_video():
     if 'file' not in request.files:
         return "Please send a POST request with a file", 400
     
-    filepath = None
+    newfilepath = None
     try:
         uploaded_file = request.files["file"]
         filename = secure_filename(uploaded_file.filename)
         diretorio_atual = os.getcwd()
-        filepath = os.path.join(diretorio_atual, 'documents', os.path.basename(filename))#.replace("\", "/")
-        print(filepath)
+        newfilepath = os.path.join(diretorio_atual, 'documents', os.path.basename(filename)).replace("\\", "/")
+        oldfilepath = os.path.join(diretorio_atual, 'documents', os.path.basename(uploaded_file.filename)).replace("\\", "/")
+        print("OLD FILE NAME: ", oldfilepath, "\nNEW FILE NAME: ", newfilepath)
         
-        video_name, ext = filename.split(".")
+        os.rename(oldfilepath, newfilepath)
+        video_name, _ = uploaded_file.filename.split(".")
         print(video_name)
-        video_id = client.upload_video(video_name, filepath, video_description=description, language=language, wait_for_index=True)
+        video_id = client.upload_video(video_name, newfilepath, video_description=description, language=language, wait_for_index=True)
         content_prompt = client.generate_prompt(video_id, operation='get_prompt_content')
-        # adicionar content_prompt em um json e adicionar eme no index com o manager
         
-        uploaded_file.save(filepath)
+        # adicionar content_prompt em um json e adicionar ele no index com o manager
+        url, _ = newfilepath.split(".")
+        content_path = url + "_Video.json"
+        print(content_path)
+        with open(content_path, 'w') as file:
+            json.dump(content_prompt, file, indent=4)
+        
+        uploaded_file.save(newfilepath)
         print(f"Chegamos aqui no vídeo: {video_id}")
 
-    #     if request.form.get("filename_as_doc_id", None) is not None:
-    #         manager.insert_into_index(filepath, doc_id=filename)
-    #     else:
-    #         manager.insert_into_index(filepath)
+        _, content_file = content_path.rsplit("/", 1)
+        print(content_file)
+        if request.form.get("filename_as_doc_id", None) is not None:
+            manager.insert_into_index(content_path, doc_id=content_file)
+        else:
+            manager.insert_into_index(content_path)
     except Exception as e:
         # cleanup temp file
-        if filepath is not None and os.path.exists(filepath):
+        if newfilepath is not None and os.path.exists(newfilepath):
             # os.remove(filepath)
             pass
         return "Error: {}".format(str(e)), 500
 
     # cleanup temp file
-    if filepath is not None and os.path.exists(filepath):
+    if newfilepath is not None and os.path.exists(newfilepath):
         # os.remove(filepath)
         pass
 
