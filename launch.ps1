@@ -4,6 +4,7 @@ cd backend/app
 # Iniciar o index_server.py e exibir mensagem
 Write-Host "[PROCESS] Iniciando o index_server.py..." -ForegroundColor Blue
 Start-Process -NoNewWindow python ./index_server.py
+Start-Sleep -Seconds 10
 # Voltar para o diretório anterior
 cd ..
 
@@ -19,9 +20,12 @@ $timeout = 20
 $interval = 1
 $timePassed = 0
 
+
+$OriginalProgressPreference = $Global:ProgressPreference
+$Global:ProgressPreference = 'SilentlyContinue'
 while ($timePassed -lt $timeout) {
     # Testar se a porta está aberta
-    $tcpConnection = Test-NetConnection -ComputerName 127.0.0.1 -Port $port
+    $tcpConnection = Test-NetConnection -ComputerName 127.0.0.1 -Port $port -WarningAction SilentlyContinue
     if ($tcpConnection.TcpTestSucceeded) {
         Write-Host "[SUCCESS] index_server.py rodando na porta $port!" -ForegroundColor Green
         break
@@ -31,6 +35,7 @@ while ($timePassed -lt $timeout) {
         $timePassed += $interval
     }
 }
+$Global:ProgressPreference = $OriginalProgressPreference
 
 if ($timePassed -ge $timeout) {
     Write-Host "[ERROR] Timeout: O servidor não iniciou dentro do tempo limite de $timeout segundos." -ForegroundColor Red
@@ -39,10 +44,12 @@ if ($timePassed -ge $timeout) {
 
 Write-Host "[PROCESS] Iniciando o Redis server..." -ForegroundColor Blue
 Start-Process -NoNewWindow redis-server .\redis.conf
+Start-Sleep -Seconds 3
 
 # Iniciar o Celery worker e exibir mensagem
 Write-Host "[PROCESS] Iniciando Celery worker..." -ForegroundColor Blue
-Start-Process -NoNewWindow celery -A run.celery worker --pool=solo -l info
+Start-Process -NoNewWindow -FilePath "celery" -ArgumentList "-A run.celery worker --pool=solo -l info"
+Start-Sleep -Seconds 5
 
 # Iniciar run.py e exibir mensagem
 Write-Host "[PROCESS] Iniciando run.py..." -ForegroundColor Blue
