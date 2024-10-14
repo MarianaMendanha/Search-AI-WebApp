@@ -136,6 +136,8 @@ class VideoUploadManager(VideoUploadManagerInterface):
 
             video_result = response.json()
             video_state = video_result.get('state')
+            progress = video_result.get('videos')[0].get('processingProgress')
+            # print(progress)
 
             if video_state == 'Processed':
                 processing = False
@@ -146,13 +148,13 @@ class VideoUploadManager(VideoUploadManagerInterface):
                 print(f"The video index failed for video ID {video_id}.")
                 break
 
-            print(f'The video index state is {video_state}')
+            print(f'The video index state is {video_state} {progress}')
 
             if timeout_sec is not None and time.time() - start_time > timeout_sec:
                 print(f'Timeout of {timeout_sec} seconds reached. Exiting...')
                 break
 
-            time.sleep(10) # wait 10 seconds before checking again
+            time.sleep(5) # wait 10 seconds before checking again
 
     def is_video_processed(self, video_id:str) -> bool:
         self.get_account_async() # if account is not initialized, get it

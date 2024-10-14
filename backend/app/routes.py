@@ -159,6 +159,66 @@ def upload_video():
 
     return "File inserted!", 200
 
+
+from .tasks import process_video
+@main.route("/uploadVideoAsync", methods=["POST"])
+def upload_video_async():
+    args = request.args
+    description = args.get('description')
+    language = args.get('language')
+
+    if 'file' not in request.files:
+        return jsonify({"error": "Please send a POST request with a file"}), 400
+
+    try:
+        # Processa o arquivo
+        uploaded_file = request.files["file"]
+        filename = secure_filename(uploaded_file.filename)
+        diretorio_atual = os.getcwd()
+        newfilepath = os.path.join(diretorio_atual, 'documents', os.path.basename(filename)).replace("\\", "/")
+        content_path = newfilepath.rsplit(".", 1)[0] + "_Video.json"
+
+        # Salva o arquivo temporariamente
+        uploaded_file.save(newfilepath)
+
+        # Chama a task Celery para processar o vídeo em background
+        task = process_video.delay(filename, description, language, newfilepath, content_path)
+
+        return jsonify({"message": "File is being processed", "task_id": task.id}), 202
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@main.route('/task_status/<task_id>', methods=['GET'])
+def get_task_status(task_id):
+    task = process_video.AsyncResult(task_id)
+    if task.state == 'PENDING':
+        response = {
+            'state': task.state,
+            'status': 'Pending...'
+        }
+    elif task.state != 'FAILURE':
+        response = {
+            'state': task.state,
+            'status': task.info.get('status', ''),
+            'result': task.info  # task.info contém o resultado da task
+        }
+    else:
+        response = {
+            'state': task.state,
+            'status': str(task.info)  # O traceback do erro
+        }
+    return jsonify(response)
+
+@main.route("/cancel/<task_id>")
+def cancel(task_id):
+    task = process_video.AsyncResult(task_id)
+    task.abort()
+    return "CANCELED!"
+
+
+
+
 from .forms import MyForm
 from .tasks import add_user
 @main.route('/create_user', methods=['GET', 'POST'])
@@ -171,8 +231,3 @@ def create_user():
 
     return render_template('form.html', form=form)
 
-@main.route("/cancel/<task_id>")
-def cancel(task_id):
-    task = add_user.AsyncResult(task_id)
-    task.abort()
-    return "CANCELED!"
