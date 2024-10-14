@@ -1,9 +1,9 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, request, jsonify, make_response, redirect
 import os
-from flask import request, jsonify, make_response
 from werkzeug.utils import secure_filename
 from multiprocessing.managers import BaseManager
 
+main = Blueprint('main', __name__)
 
 # initialize manager connection
 # NOTE: you might want to handle the password in a less hardcoded way
@@ -15,10 +15,11 @@ manager.connect()
 
 from app.tools.video.client.video_indexer_client import VideoIndexerClient
 from app.tools.video.client.Consts import Consts
-import json
+import json, sys
 from dotenv import dotenv_values
 from pprint import pprint
-import sys
+
+
 
 def config_video_indexer_client():
     config = dotenv_values(".env")
@@ -37,7 +38,6 @@ def config_video_indexer_client():
     
     return client
 
-main = Blueprint('main', __name__)
 
 @main.route('/')
 def index_home():
@@ -158,3 +158,21 @@ def upload_video():
         pass
 
     return "File inserted!", 200
+
+from .forms import MyForm
+from .tasks import add_user
+@main.route('/create_user', methods=['GET', 'POST'])
+def create_user():
+    form = MyForm()
+
+    if form.validate_on_submit():
+        task = add_user.delay(form.data)
+        return render_template("cancel.html", task=task)
+
+    return render_template('form.html', form=form)
+
+@main.route("/cancel/<task_id>")
+def cancel(task_id):
+    task = add_user.AsyncResult(task_id)
+    task.abort()
+    return "CANCELED!"

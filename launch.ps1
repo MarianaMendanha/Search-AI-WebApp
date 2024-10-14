@@ -37,6 +37,12 @@ if ($timePassed -ge $timeout) {
     exit 1
 }
 
+Write-Host "[PROCESS] Iniciando o Redis server..." -ForegroundColor Blue
+Start-Process -NoNewWindow redis-server .\redis.conf
+
+# Iniciar o Celery worker e exibir mensagem
+Write-Host "[PROCESS] Iniciando Celery worker..." -ForegroundColor Blue
+Start-Process -NoNewWindow celery -A run.celery worker --pool=solo -l info
 
 # Iniciar run.py e exibir mensagem
 Write-Host "[PROCESS] Iniciando run.py..." -ForegroundColor Blue
