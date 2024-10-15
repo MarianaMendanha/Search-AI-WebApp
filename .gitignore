@@ -1,4 +1,5 @@
 .env
 .pyc
 */__pycache__/*
+backend/app/__pycache__/
 wait/*
