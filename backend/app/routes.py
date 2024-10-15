@@ -18,6 +18,7 @@ from app.tools.video.client.Consts import Consts
 import json, sys
 from dotenv import dotenv_values
 from pprint import pprint
+import redis
 
 
 
@@ -125,22 +126,22 @@ def upload_video():
         
         os.rename(oldfilepath, newfilepath)
         video_name, _ = uploaded_file.filename.split(".")
-        print(video_name)
+        print(f"video name :{video_name}")
         video_id = client.upload_video(video_name, newfilepath, video_description=description, language=language, wait_for_index=True)
         content_prompt = client.generate_prompt(video_id, operation='get_prompt_content')
         
         # adicionar content_prompt em um json e adicionar ele no index com o manager
         url, _ = newfilepath.split(".")
         content_path = url + "_Video.json"
-        print(content_path)
+        # print(content_path)
         with open(content_path, 'w') as file:
             json.dump(content_prompt, file, indent=4)
         
         uploaded_file.save(newfilepath)
-        print(f"Chegamos aqui no vídeo: {video_id}")
+        # print(f"Chegamos aqui no vídeo: {video_id}")
 
         _, content_file = content_path.rsplit("/", 1)
-        print(content_file)
+        # print(content_file)
         if request.form.get("filename_as_doc_id", None) is not None:
             manager.insert_into_index(content_path, doc_id=content_file)
         else:
@@ -189,24 +190,30 @@ def upload_video_async():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@main.route('/task_status/<task_id>', methods=['GET'])
+@main.route('/task_status/<task_id>', methods=["GET"])
 def get_task_status(task_id):
     task = process_video.AsyncResult(task_id)
     if task.state == 'PENDING':
         response = {
             'state': task.state,
-            'status': 'Pending...'
+            'progress': 0
+        }
+    elif task.state == 'PROGRESS':
+        response = {
+            'state': task.state,
+            'progress': task.info.get('current', 0) / task.info.get('total', 1) * 100
         }
     elif task.state != 'FAILURE':
         response = {
             'state': task.state,
-            'status': task.info.get('status', ''),
-            'result': task.info  # task.info contém o resultado da task
+            'progress': 100,
+            'result': task.info
         }
     else:
         response = {
             'state': task.state,
-            'status': str(task.info)  # O traceback do erro
+            'progress': 0,
+            'result': str(task.info)  # traceback
         }
     return jsonify(response)
 
@@ -216,7 +223,40 @@ def cancel(task_id):
     task.abort()
     return "CANCELED!"
 
+redis_client = redis.StrictRedis(host='127.0.0.1', port=6380, db=0)
+@main.route("/uploadVideo_status", methods=["GET","POST"])
+def upload_video_status():
+    if request.method == "POST":
+        data = request.get_json()
+        video_name = data.get("video_name")
+        progress = data.get("progress")
+        # print(f"No endpoint:{(video_name)}|{type(video_name)}:{progress}|{type(video_name)}")
 
+        if video_name and progress:
+            # Armazena ou atualiza o progresso no Redis
+            redis_client.set(f"video:{video_name}", progress)
+
+            # Verifica se o progresso é 100% e apaga o registro se for o caso
+            if progress == "100%":
+                redis_client.delete(video_name)
+                return jsonify({"message": "Progress Completed and deleted!"}), 200
+
+            return jsonify({"message": "Progress updated successfully!"}), 200
+        else:
+            return jsonify({"error": "Invalid data!"}), 400
+
+    elif request.method == "GET":
+        # Recupera o progresso de todos os vídeos, ignorando chaves irrelevantes
+        all_progress = {}
+        for key in redis_client.keys():
+            key_name = key.decode("utf-8")
+            if key_name.startswith("video:"):  # Supondo que você use um prefixo para as chaves de vídeo
+                value_type = redis_client.type(key).decode("utf-8")
+                if value_type == 'string':
+                    all_progress[key_name] = redis_client.get(key).decode("utf-8")
+                else:
+                    all_progress[key_name] = f"Value type is {value_type}, cannot decode."
+        return jsonify(all_progress), 200
 
 
 from .forms import MyForm
