@@ -8,7 +8,7 @@ MyManager.register('get_dict')
 
 def client_access():
     # Conecta ao servidor BaseManager
-    manager = MyManager(address=('127.0.0.1', 5001), authkey=b'password')
+    manager = MyManager(address=('127.0.0.1', 5002), authkey=b'password')
     manager.connect()  # Conecta ao servidor
 
     # Acessa o dicionário remoto

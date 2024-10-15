@@ -90,6 +90,7 @@ class VideoUploadManager(VideoUploadManagerInterface):
         }
 
 
+
         print('Uploading a local file using multipart/form-data post request to this URL:')
 
         response = requests.post(url, params=params, files={'file': open(media_path,'rb')}, stream=True)
@@ -102,11 +103,11 @@ class VideoUploadManager(VideoUploadManagerInterface):
         video_id = response.json().get('id')
         
         if wait_for_index:
-            self._wait_for_index(video_id, language)
+            self._wait_for_index(video_id, video_name, language)
 
         return video_id
 
-    def _wait_for_index(self, video_id:str, language:str='auto', timeout_sec:Optional[int]=None) -> None:
+    def _wait_for_index(self, video_id:str, video_name:str, language:str='auto', timeout_sec:Optional[int]=None) -> None:
         '''
         Calls getVideoIndex API in 10 second intervals until the indexing state is 'processed'
         (https://api-portal.videoindexer.ai/api-details#api=Operations&operation=Get-Video-Index).
@@ -136,6 +137,12 @@ class VideoUploadManager(VideoUploadManagerInterface):
 
             video_result = response.json()
             video_state = video_result.get('state')
+            progress = video_result.get('videos')[0].get('processingProgress')
+            # print(progress)
+            
+            # print(f"Video Name:|{video_name}|")
+            response_status = requests.post("http://127.0.0.1:5000/uploadVideo_status", json={"video_name": video_name, "progress": str(progress)})
+            # print(f"Resposta JSON::::::{response_status.json()}")
 
             if video_state == 'Processed':
                 processing = False
@@ -146,13 +153,13 @@ class VideoUploadManager(VideoUploadManagerInterface):
                 print(f"The video index failed for video ID {video_id}.")
                 break
 
-            print(f'The video index state is {video_state}')
+            print(f'The video index state is {video_state} {progress}')
 
             if timeout_sec is not None and time.time() - start_time > timeout_sec:
                 print(f'Timeout of {timeout_sec} seconds reached. Exiting...')
                 break
 
-            time.sleep(10) # wait 10 seconds before checking again
+            time.sleep(5) # wait 10 seconds before checking again
 
     def is_video_processed(self, video_id:str) -> bool:
         self.get_account_async() # if account is not initialized, get it

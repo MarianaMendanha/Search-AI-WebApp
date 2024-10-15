@@ -1,13 +1,13 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, request, jsonify, make_response, redirect
 import os
-from flask import request, jsonify, make_response
 from werkzeug.utils import secure_filename
 from multiprocessing.managers import BaseManager
 
+main = Blueprint('main', __name__)
 
 # initialize manager connection
 # NOTE: you might want to handle the password in a less hardcoded way
-manager = BaseManager(address=('127.0.0.1', 5001), authkey=b'password')
+manager = BaseManager(address=('127.0.0.1', 5002), authkey=b'password')
 manager.register('query_index')
 manager.register('insert_into_index')
 manager.register('get_documents_list')
@@ -15,10 +15,12 @@ manager.connect()
 
 from app.tools.video.client.video_indexer_client import VideoIndexerClient
 from app.tools.video.client.Consts import Consts
-import json
+import json, sys
 from dotenv import dotenv_values
 from pprint import pprint
-import sys
+import redis
+
+
 
 def config_video_indexer_client():
     config = dotenv_values(".env")
@@ -37,7 +39,6 @@ def config_video_indexer_client():
     
     return client
 
-main = Blueprint('main', __name__)
 
 @main.route('/')
 def index_home():
@@ -114,37 +115,159 @@ def upload_video():
     if 'file' not in request.files:
         return "Please send a POST request with a file", 400
     
-    filepath = None
+    newfilepath = None
     try:
         uploaded_file = request.files["file"]
         filename = secure_filename(uploaded_file.filename)
         diretorio_atual = os.getcwd()
-        filepath = os.path.join(diretorio_atual, 'documents', os.path.basename(filename))#.replace("\", "/")
-        print(filepath)
+        newfilepath = os.path.join(diretorio_atual, 'documents', os.path.basename(filename)).replace("\\", "/")
+        oldfilepath = os.path.join(diretorio_atual, 'documents', os.path.basename(uploaded_file.filename)).replace("\\", "/")
+        print("OLD FILE NAME: ", oldfilepath, "\nNEW FILE NAME: ", newfilepath)
         
-        video_name, ext = filename.split(".")
-        print(video_name)
-        video_id = client.upload_video(video_name, filepath, video_description=description, language=language, wait_for_index=True)
+        os.rename(oldfilepath, newfilepath)
+        video_name, _ = uploaded_file.filename.split(".")
+        print(f"video name :{video_name}")
+        video_id = client.upload_video(video_name, newfilepath, video_description=description, language=language, wait_for_index=True)
         content_prompt = client.generate_prompt(video_id, operation='get_prompt_content')
-        # adicionar content_prompt em um json e adicionar eme no index com o manager
         
-        uploaded_file.save(filepath)
-        print(f"Chegamos aqui no vídeo: {video_id}")
+        # adicionar content_prompt em um json e adicionar ele no index com o manager
+        url, _ = newfilepath.split(".")
+        content_path = url + "_Video.json"
+        # print(content_path)
+        with open(content_path, 'w') as file:
+            json.dump(content_prompt, file, indent=4)
+        
+        uploaded_file.save(newfilepath)
+        # print(f"Chegamos aqui no vídeo: {video_id}")
 
-    #     if request.form.get("filename_as_doc_id", None) is not None:
-    #         manager.insert_into_index(filepath, doc_id=filename)
-    #     else:
-    #         manager.insert_into_index(filepath)
+        _, content_file = content_path.rsplit("/", 1)
+        # print(content_file)
+        if request.form.get("filename_as_doc_id", None) is not None:
+            manager.insert_into_index(content_path, doc_id=content_file)
+        else:
+            manager.insert_into_index(content_path)
     except Exception as e:
         # cleanup temp file
-        if filepath is not None and os.path.exists(filepath):
+        if newfilepath is not None and os.path.exists(newfilepath):
             # os.remove(filepath)
             pass
         return "Error: {}".format(str(e)), 500
 
     # cleanup temp file
-    if filepath is not None and os.path.exists(filepath):
+    if newfilepath is not None and os.path.exists(newfilepath):
         # os.remove(filepath)
         pass
 
     return "File inserted!", 200
+
+
+from .tasks import process_video
+@main.route("/uploadVideoAsync", methods=["POST"])
+def upload_video_async():
+    args = request.args
+    description = args.get('description')
+    language = args.get('language')
+
+    if 'file' not in request.files:
+        return jsonify({"error": "Please send a POST request with a file"}), 400
+
+    try:
+        # Processa o arquivo
+        uploaded_file = request.files["file"]
+        filename = secure_filename(uploaded_file.filename)
+        diretorio_atual = os.getcwd()
+        newfilepath = os.path.join(diretorio_atual, 'documents', os.path.basename(filename)).replace("\\", "/")
+        content_path = newfilepath.rsplit(".", 1)[0] + "_Video.json"
+
+        # Salva o arquivo temporariamente
+        uploaded_file.save(newfilepath)
+
+        # Chama a task Celery para processar o vídeo em background
+        task = process_video.delay(filename, description, language, newfilepath, content_path)
+
+        return jsonify({"message": "File is being processed", "task_id": task.id}), 202
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@main.route('/task_status/<task_id>', methods=["GET"])
+def get_task_status(task_id):
+    task = process_video.AsyncResult(task_id)
+    if task.state == 'PENDING':
+        response = {
+            'state': task.state,
+            'progress': 0
+        }
+    elif task.state == 'PROGRESS':
+        response = {
+            'state': task.state,
+            'progress': task.info.get('current', 0) / task.info.get('total', 1) * 100
+        }
+    elif task.state != 'FAILURE':
+        response = {
+            'state': task.state,
+            'progress': 100,
+            'result': task.info
+        }
+    else:
+        response = {
+            'state': task.state,
+            'progress': 0,
+            'result': str(task.info)  # traceback
+        }
+    return jsonify(response)
+
+@main.route("/cancel/<task_id>")
+def cancel(task_id):
+    task = process_video.AsyncResult(task_id)
+    task.abort()
+    return "CANCELED!"
+
+redis_client = redis.StrictRedis(host='127.0.0.1', port=6380, db=0)
+@main.route("/uploadVideo_status", methods=["GET","POST"])
+def upload_video_status():
+    if request.method == "POST":
+        data = request.get_json()
+        video_name = data.get("video_name")
+        progress = data.get("progress")
+        # print(f"No endpoint:{(video_name)}|{type(video_name)}:{progress}|{type(video_name)}")
+
+        if video_name and progress:
+            # Armazena ou atualiza o progresso no Redis
+            redis_client.set(f"video:{video_name}", progress)
+
+            # Verifica se o progresso é 100% e apaga o registro se for o caso
+            if progress == "100%":
+                redis_client.delete(video_name)
+                return jsonify({"message": "Progress Completed and deleted!"}), 200
+
+            return jsonify({"message": "Progress updated successfully!"}), 200
+        else:
+            return jsonify({"error": "Invalid data!"}), 400
+
+    elif request.method == "GET":
+        # Recupera o progresso de todos os vídeos, ignorando chaves irrelevantes
+        all_progress = {}
+        for key in redis_client.keys():
+            key_name = key.decode("utf-8")
+            if key_name.startswith("video:"):  # Supondo que você use um prefixo para as chaves de vídeo
+                value_type = redis_client.type(key).decode("utf-8")
+                if value_type == 'string':
+                    all_progress[key_name] = redis_client.get(key).decode("utf-8")
+                else:
+                    all_progress[key_name] = f"Value type is {value_type}, cannot decode."
+        return jsonify(all_progress), 200
+
+
+from .forms import MyForm
+from .tasks import add_user
+@main.route('/create_user', methods=['GET', 'POST'])
+def create_user():
+    form = MyForm()
+
+    if form.validate_on_submit():
+        task = add_user.delay(form.data)
+        return render_template("cancel.html", task=task)
+
+    return render_template('form.html', form=form)
+

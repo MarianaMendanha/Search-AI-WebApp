@@ -76,7 +76,7 @@ class VideoContentManager(VideoContentManagerInterface):
                 print(f'Timeout of {timeout_sec} seconds reached. Exiting...')
                 break
 
-            print('Prompt content is not ready yet. Waiting 5 seconds before checking again...')
+            print('Prompt content is not ready yet. Waiting 10 seconds before checking again...')
             time.sleep(10)
 
         return prompt_content

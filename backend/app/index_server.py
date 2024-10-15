@@ -155,28 +155,50 @@ def get_documents_list():
 
 def delete_document_from_index():
     print("deletou")
-    
-import socket    
+
+
+import socket, subprocess, sys    
 def is_port_in_use(port):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         return s.connect_ex(('127.0.0.1', port)) == 0
-    
+
+# COMANDOS DO WINDOWS
+def get_pid_using_port(port):
+    result = subprocess.run(['netstat', '-ano'], capture_output=True, text=True)
+    for line in result.stdout.splitlines():
+        if f':{port} ' in line:
+            return int(line.split()[-1])
+    return None
+
+import time
+from tqdm import tqdm
+
 if __name__ == "__main__":
     # init the global index
     print("initializing index...")
     initialize_index()
 
+    # Simular progresso da inicialização do servidor
+    for _ in tqdm(range(100), desc="Iniciando servidor", ncols=100):
+        time.sleep(0.05)  # Simula a inicialização
+        
     # setup server
     # NOTE: you might want to handle the password in a less hardcoded way
-    if is_port_in_use(5001):
-        print("Porta 5001 já está em uso, por favor use outra.")
-    else:
-        manager = BaseManager(address=('127.0.0.1', 5001), authkey=b'password')
-        manager.register('query_index', query_index)
-        manager.register('insert_into_index', insert_into_index)
-        manager.register('get_documents_list', get_documents_list)
-        server = manager.get_server()
+    port = 5002
+    if is_port_in_use(port):
+        pid = get_pid_using_port(port)
+        if pid:
+            print(f"Porta {port} já está em uso pelo processo {pid}. Terminando o processo.")
+            os.system(f"taskkill /PID {pid} /F")
+        else:
+            print(f"Porta {port} está em uso, mas não foi possível encontrar o PID.")
+            
+    manager = BaseManager(address=('127.0.0.1', port), authkey=b'password')
+    manager.register('query_index', query_index)
+    manager.register('insert_into_index', insert_into_index)
+    manager.register('get_documents_list', get_documents_list)
+    server = manager.get_server()
 
-        print("server started...")
-        server.serve_forever()
+    print("index server started...")
+    server.serve_forever()
 
