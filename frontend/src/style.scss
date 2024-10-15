@@ -1,0 +1,99 @@
+.teste {
+  display: none;
+}
+
+.query__sources__item__id, .viewer__list__header, .viewer__list__title, .ask_question_text, .select_file_text {
+  color: #e0e0e0; // ou qualquer cor que você preferir
+  background-color: transparent;
+}
+
+.uploader__details, .query_response {
+  color: #e0e0e0;
+  background-color: transparent;
+}
+
+p {
+  color: #e0e0e0;
+}
+
+
+.viewer__list__text {
+  color: #949393;
+}
+
+
+@import url(https://fonts.googleapis.com/css?family=Open+Sans:400italic,400,300,600);
+
+$theme-colors: (
+  primary: #1e1e1e, // Fundo principal mais escuro
+  secondary: #333333, // Cor secundária mais escura
+  secondary-hover: #444444, // Cor de hover mais clara
+  text-main: #e0e0e0, // Texto principal claro
+  text-contrast: #ffffff, // Texto contrastante (branco)
+  header-big-block: #3a3a3a, // Bloco maior de header (escuro)
+  header-narrow-block: #4f4f4f // Bloco menor de header (escuro)
+);
+
+@function theme-color($key) {
+  @return map-get($theme-colors, $key);
+}
+
+@import './styles/components_style';
+
+body {
+  background-color: transparent !important;
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  background-image: url('../Bakground-dark.jpg'); // Talvez mudar a imagem de fundo para algo mais escuro
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  color-scheme: light dark;
+  // color: rgba(255, 255, 255, 0.87);
+  // background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
+
+.app {
+  text-align: center;
+  height: 100vh;
+  width: 100%;
+  background-color: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.content {
+  margin-top: 50px;
+  display: flex;
+  flex-direction: row;
+  gap: 50px;
+  width: 900px;
+}
+
+body {
+  font-family: 'Open sans', sans-serif;
+  background-color: transparent;
+  // background-color: theme-color(primary); // Definir o fundo do corpo da página
+  color: theme-color(text-main); // Definir a cor do texto
+}
