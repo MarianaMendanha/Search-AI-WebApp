@@ -1,4 +1,14 @@
+# Ignorar arquivos .env
 .env
-.pyc
-*/__pycache__/*
+
+# Ignorar arquivos .pyc
+*.pyc
+
+# Ignorar todos os diretórios __pycache__ em qualquer lugar do projeto
+**/__pycache__/
+
+# Ignorar arquivos dentro da pasta backend/app/__pycache__/
+backend/app/__pycache__/*
+
+# Ignorar diretório wait
 wait/*

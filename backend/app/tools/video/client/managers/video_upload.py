@@ -50,7 +50,7 @@ class VideoUploadManager(VideoUploadManagerInterface):
         print(f'Video ID {video_id} was uploaded successfully')
 
         if wait_for_index:
-            self._wait_for_index(video_id)
+            self.wait_for_index(video_id)
 
         return video_id
 
@@ -103,11 +103,11 @@ class VideoUploadManager(VideoUploadManagerInterface):
         video_id = response.json().get('id')
         
         if wait_for_index:
-            self._wait_for_index(video_id, video_name, language)
+            self.wait_for_index(video_id, video_name, language)
 
         return video_id
 
-    def _wait_for_index(self, video_id:str, video_name:str, language:str='auto', timeout_sec:Optional[int]=None) -> None:
+    def wait_for_index(self, video_id:str, video_name:str, language:str='auto', timeout_sec:Optional[int]=None) -> None:
         '''
         Calls getVideoIndex API in 10 second intervals until the indexing state is 'processed'
         (https://api-portal.videoindexer.ai/api-details#api=Operations&operation=Get-Video-Index).
@@ -141,15 +141,17 @@ class VideoUploadManager(VideoUploadManagerInterface):
             # print(progress)
             
             # print(f"Video Name:|{video_name}|")
-            response_status = requests.post("http://127.0.0.1:5000/uploadVideo_status", json={"video_name": video_name, "progress": str(progress)})
+            response_status = requests.post("http://127.0.0.1:5000/uploadVideo_status", json={"videoId": video_id, "name": video_name, "progress": progress})
             # print(f"Resposta JSON::::::{response_status.json()}")
 
             if video_state == 'Processed':
                 processing = False
+                response_status = requests.post("http://127.0.0.1:5000/uploadVideo_status", json={"videoId": video_id, "name": video_name, "progress": "100%"})
                 print(f'The video index has completed. Here is the full JSON of the index for video ID {video_id}: \n{video_result}')
                 break
             elif video_state == 'Failed':
                 processing = False
+                response_status = requests.post("http://127.0.0.1:5000/uploadVideo_status", json={"videoId": video_id, "name": video_name, "progress": "Failed"})
                 print(f"The video index failed for video ID {video_id}.")
                 break
 
@@ -159,7 +161,7 @@ class VideoUploadManager(VideoUploadManagerInterface):
                 print(f'Timeout of {timeout_sec} seconds reached. Exiting...')
                 break
 
-            time.sleep(5) # wait 10 seconds before checking again
+            time.sleep(5) # wait 5 seconds before checking again
 
     def is_video_processed(self, video_id:str) -> bool:
         self.get_account_async() # if account is not initialized, get it

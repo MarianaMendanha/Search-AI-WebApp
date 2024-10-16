@@ -14,7 +14,8 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///db.sqlite3"
     app.config["CELERY_CONFIG"] = {
         "broker_url": "redis://127.0.0.1:6380/0",
-        "result_backend": "redis://127.0.0.1:6380/0"
+        "result_backend": "redis://127.0.0.1:6380/0",
+        "result_expires": 3600
     }
 
     # Inicializa o banco de dados
