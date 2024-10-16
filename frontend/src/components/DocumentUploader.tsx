@@ -50,7 +50,7 @@ const DocumentUploader = ({ setRefreshViewer }: DocumentUploaderProps) => {
         type='file'
         name='file-input'
         id='file-input'
-        accept='.pdf,.txt,.json,.md'
+        accept='.pdf,.txt,.json,.md,.mp4,.avi,.mov,.mp3,.wav'
         onChange={changeHandler}
       />
       <label className='uploader__label' htmlFor='file-input'>

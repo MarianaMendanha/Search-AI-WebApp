@@ -6,7 +6,7 @@ const Header = () => {
       </div>
       <div className='app-header__sub'>
         <div>
-          <p>Chat Search da Mari</p>
+          <p>Search AI da Mari</p>
         </div>
       </div>
     </header>
