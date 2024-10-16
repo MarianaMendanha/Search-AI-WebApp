@@ -15,3 +15,6 @@ class VideoUploadManagerInterface(Protocol):
         Uploads a local file and starts the video indexing process.
         """
         ...
+
+    def wait_for_index(self, video_id:str, video_name:str, language:str='auto', timeout_sec:Optional[int]=None) -> None:
+        ...

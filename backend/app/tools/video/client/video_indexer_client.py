@@ -52,7 +52,7 @@ class VideoIndexerClient:
         print(f'[Account Details] Id:{self.account["properties"]["accountId"]}, Location: {self.account["location"]}')
 
     def upload_video(   self, video_name: Optional[str] = None, video_path_or_url: str = '', wait_for_index: bool = False, video_description: str = '',
-                        privacy: str = 'Private', partition='', language: str = 'auto' ) -> str:
+                        privacy: str = 'Private', partition='', language: str = 'auto', op: Optional[str] = None, video_id: Optional[str] = None ) -> str:
         """
         Uploads a video, automatically detecting if it's a URL or a file path.
         
@@ -66,6 +66,16 @@ class VideoIndexerClient:
         :return: The ID of the uploaded video.
         """
         # excluded_ai = excluded_ai or []
+        
+        # print(f"video_name: {video_name}")
+        # print(f"video_path_or_url: {video_path_or_url}")
+        # print(f"wait_for_index: {wait_for_index}")
+        # print(f"video_description: {video_description}")
+        # print(f"privacy: {privacy}")
+        # print(f"partition: {partition}")
+        # print(f"language: {language}")
+        # print(f"op: {op}")
+        # print(f"video_id: {video_id}")
 
         if video_path_or_url.startswith("http") or video_path_or_url.startswith("https"):  # Assume it's a URL
             print("É uma URL!")
@@ -76,6 +86,13 @@ class VideoIndexerClient:
                 wait_for_index=wait_for_index, 
                 video_description=video_description,
                 privacy=privacy,
+                language=language
+            )
+        elif op is not None and op == 'wait':
+            print("É um WAIT!")
+            return self.upload_manager.wait_for_index(
+                video_id=video_id,
+                video_name=video_name,
                 language=language
             )
         else:

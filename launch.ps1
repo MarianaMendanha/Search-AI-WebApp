@@ -4,7 +4,7 @@ cd backend/app
 # Iniciar o index_server.py e exibir mensagem
 Write-Host "[PROCESS] Iniciando o index_server.py..." -ForegroundColor Blue
 Start-Process -NoNewWindow python ./index_server.py
-Start-Sleep -Seconds 10
+Start-Sleep -Seconds 15
 # Voltar para o diretório anterior
 cd ..
 
