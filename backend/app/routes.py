@@ -208,8 +208,8 @@ def upload_video_status():
             redis_client.set(f"video:{video_name}", progress)
 
             # Verifica se o progresso é 100% e apaga o registro se for o caso
-            if progress == "100%":
-                print("Upload Concluído, excluindo do Redis")
+            if progress == "Finish":
+                print("Upload Concluído")
                 redis_client.delete(f"video:{video_name}")
                 return jsonify({"message": "Progress Completed and deleted!"}), 200
 
@@ -257,6 +257,10 @@ def get_task_status(task_id):
             'result': str(task.info)  # traceback
         }
     return jsonify(response)
+
+
+
+
 
 @main.route("/cancel/<task_id>")
 def cancel(task_id):
