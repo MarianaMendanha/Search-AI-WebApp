@@ -6,12 +6,11 @@ from time import sleep
 import time
 
 from .extensions import db
-from .db_models import User
 import requests
 
 @shared_task(bind=True, base=AbortableTask)
 def add_user(self, form_data):
-    db.session.add(User(name=form_data['name']))
+    # db.session.add(User(name=form_data['name']))
     db.session.commit()
     
     for i in range(10):
@@ -28,7 +27,8 @@ from .routes import config_video_indexer_client
 from .routes import manager
 
 @shared_task(bind=True)
-def process_video(self, filename, description, language, newfilepath, content_path, doc_id=None):
+def process_video(self, video_name, description, language, newfilepath, content_path, partition):
+    doc_id=None
     client = config_video_indexer_client()
     
     max_retries = 5  # Número máximo de tentativas de reconexão
@@ -38,10 +38,12 @@ def process_video(self, filename, description, language, newfilepath, content_pa
     while retry_count < max_retries:
         try:
             # Realiza o upload do vídeo e a geração do prompt
-            video_name, _ = filename.split(".")
-            video_id = client.upload_video(video_name, newfilepath, video_description=description, language=language, wait_for_index=True)
-            response_status = requests.post("http://127.0.0.1:5000/uploadVideo_status", json={"video_name": video_name, "progress": "100%"})
-            print(f"Resposta JSON::::::{response_status.json()}")
+            # video_name, _ = filename.split(".")
+            # video_id = client.upload_video(video_name, newfilepath, video_description=description, language=language, wait_for_index=True)
+            video_id = client.upload_video(video_name=video_name, video_path_or_url=newfilepath, video_description=description, partition=partition, language=language)
+            print(f"ID DO VIDEO --->{video_id}")
+    
+            client.upload_video(video_id=video_id, video_name=video_name, language=language, op="wait")
             
             content_prompt = client.generate_prompt(video_id, operation='get_prompt_content')
 
@@ -51,7 +53,7 @@ def process_video(self, filename, description, language, newfilepath, content_pa
 
             # Insere no index
             _, content_file = content_path.rsplit("/", 1)
-            if doc_id is not None:
+            if content_file is not None:
                 manager.insert_into_index(content_path, doc_id=content_file)
             else:
                 manager.insert_into_index(content_path)

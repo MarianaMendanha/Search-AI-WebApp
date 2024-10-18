@@ -1,6 +1,7 @@
 import { ChangeEvent, useState } from 'react';
 import { BeatLoader } from 'react-spinners';
 import insertDocument from '../apis/insertDocument';
+import VideoProgress from '../apis/VideoProgress';
 import React from 'react';
 
 /** @jsxImportSource @emotion/react */
@@ -23,11 +24,15 @@ const DocumentUploader = ({ setRefreshViewer }: DocumentUploaderProps) => {
   const [selectedFile, setSelectedFile] = useState<File>();
   const [isFilePicked, setIsFilePicked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [videoName, setVideoName] = useState<string>('');
 
   const changeHandler = (event: HTMLInputEvent) => {
     if (event.target && event.target.files) {
       setSelectedFile(event.target.files[0]);
       setIsFilePicked(true);
+      const nameWithoutExtension = event.target.files[0].name.split('.').slice(0, -1).join('.');
+      setVideoName(nameWithoutExtension);
+      console.log(nameWithoutExtension);
     }
   };
 
@@ -89,6 +94,7 @@ const DocumentUploader = ({ setRefreshViewer }: DocumentUploaderProps) => {
         </button>
       )}
       {isLoading && <BeatLoader color='#00f596' css={loaderStyle}/>}
+      <VideoProgress videoName={videoName} />
     </div>
   );
 };

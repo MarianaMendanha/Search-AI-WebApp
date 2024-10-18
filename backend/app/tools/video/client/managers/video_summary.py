@@ -58,7 +58,7 @@ class VideoSummaryManager(VideoSummaryManagerInterface):
         
         url = f'{self.client.consts.ApiEndpoint}/{self.client.account["location"]}/Accounts/{self.client.account["properties"]["accountId"]}/Videos/{video_id}/Summaries/Textual'
         
-        self._validate_parameters(sum_len, sum_style, model_name)
+        self.__validate_parameters(sum_len, sum_style, model_name)
         
         params = {
             'accessToken': self.client.vi_access_token,
@@ -78,7 +78,7 @@ class VideoSummaryManager(VideoSummaryManagerInterface):
             print(f"Error occurred: {e}")
             raise
 
-    def _validate_parameters(self, sum_len: str = None, sum_style: str = None, model_name: str = None):
+    def __validate_parameters(self, sum_len: Optional[str] = None, sum_style: Optional[str] = None, model_name: Optional[str] = None):
         allowed_lengths = ["Medium", "Short", "Long"]
         if sum_len is not None and sum_len not in allowed_lengths:
             raise ValueError(f"Invalid length value: {sum_len}. Allowed values are: {', '.join(allowed_lengths)}")

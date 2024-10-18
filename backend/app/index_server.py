@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 import openai
 from multiprocessing import Lock
 from multiprocessing.managers import BaseManager
+
 from llama_index.core import (
     SimpleDirectoryReader, 
     VectorStoreIndex, 
@@ -21,13 +22,15 @@ from llama_index.llms.ollama import Ollama
 from llama_index.llms.azure_openai import AzureOpenAI
 from llama_index.embeddings.azure_openai import AzureOpenAIEmbedding
 
+from typing import Optional, Any, Dict
+
 # Settings.embed_model = HuggingFaceEmbedding(model_name="sentence-transformers/all-mpnet-base-v2", device="cpu")
 # Settings.llm = Ollama(model="gemma2:27b", temperature=0, request_timeout=500.0, device="cpu")
 
 load_dotenv()
 
-index = None
-stored_docs = {}
+index: Optional[Any] = None
+stored_docs: Optional[Any] = {}
 lock = Lock()
 
 index_name = "./saved_index"

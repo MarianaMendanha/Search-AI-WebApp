@@ -160,13 +160,13 @@ def upload_video():
 
     return "File inserted!", 200
 
-
 from .tasks import process_video
 @main.route("/uploadVideoAsync", methods=["POST"])
 def upload_video_async():
     args = request.args
     description = args.get('description')
     language = args.get('language')
+    partition = args.get('partition')
 
     if 'file' not in request.files:
         return jsonify({"error": "Please send a POST request with a file"}), 400
@@ -175,20 +175,61 @@ def upload_video_async():
         # Processa o arquivo
         uploaded_file = request.files["file"]
         filename = secure_filename(uploaded_file.filename)
+        
         diretorio_atual = os.getcwd()
         newfilepath = os.path.join(diretorio_atual, 'documents', os.path.basename(filename)).replace("\\", "/")
         content_path = newfilepath.rsplit(".", 1)[0] + "_Video.json"
-
         # Salva o arquivo temporariamente
         uploaded_file.save(newfilepath)
-
+        
+        # client = config_video_indexer_client()
+        video_name, _ = filename.split(".")
+        
         # Chama a task Celery para processar o vídeo em background
-        task = process_video.delay(filename, description, language, newfilepath, content_path)
+        task = process_video.delay(video_name, description, language, newfilepath, content_path, partition)
 
         return jsonify({"message": "File is being processed", "task_id": task.id}), 202
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+redis_client = redis.StrictRedis(host='127.0.0.1', port=6380, db=0)
+@main.route("/uploadVideo_status", methods=["GET","POST"])
+def upload_video_status():
+    if request.method == "POST":
+        data = request.get_json()
+        videoId = data.get("videoId")
+        video_name = data.get("name")
+        progress = data.get("progress")
+        # print(f"No endpoint:{(video_name)}|{type(video_name)}:{progress}|{type(video_name)}")
+
+        if videoId and video_name and progress:
+            # Armazena ou atualiza o progresso no Redis
+            redis_client.set(f"video:{video_name}", progress)
+
+            # Verifica se o progresso é 100% e apaga o registro se for o caso
+            if progress == "Finish":
+                print("Upload Concluído")
+                redis_client.delete(f"video:{video_name}")
+                return jsonify({"message": "Progress Completed and deleted!"}), 200
+
+            return jsonify({"message": "Progress updated successfully!"}), 200
+        else:
+            return jsonify({"error": "Invalid data!"}), 400
+
+    elif request.method == "GET":
+        # Recupera o progresso de todos os vídeos, ignorando chaves irrelevantes
+        all_progress = {}
+        for key in redis_client.keys():
+            key_name = key.decode("utf-8")
+            if key_name.startswith("video:"):  # Supondo que você use um prefixo para as chaves de vídeo
+                value_type = redis_client.type(key).decode("utf-8")
+                if value_type == 'string':
+                    all_progress[key_name] = redis_client.get(key).decode("utf-8")
+                else:
+                    all_progress[key_name] = f"Value type is {value_type}, cannot decode."
+        return jsonify(all_progress), 200
+
 
 @main.route('/task_status/<task_id>', methods=["GET"])
 def get_task_status(task_id):
@@ -217,47 +258,15 @@ def get_task_status(task_id):
         }
     return jsonify(response)
 
+
+
+
+
 @main.route("/cancel/<task_id>")
 def cancel(task_id):
     task = process_video.AsyncResult(task_id)
     task.abort()
     return "CANCELED!"
-
-redis_client = redis.StrictRedis(host='127.0.0.1', port=6380, db=0)
-@main.route("/uploadVideo_status", methods=["GET","POST"])
-def upload_video_status():
-    if request.method == "POST":
-        data = request.get_json()
-        video_name = data.get("video_name")
-        progress = data.get("progress")
-        # print(f"No endpoint:{(video_name)}|{type(video_name)}:{progress}|{type(video_name)}")
-
-        if video_name and progress:
-            # Armazena ou atualiza o progresso no Redis
-            redis_client.set(f"video:{video_name}", progress)
-
-            # Verifica se o progresso é 100% e apaga o registro se for o caso
-            if progress == "100%":
-                redis_client.delete(video_name)
-                return jsonify({"message": "Progress Completed and deleted!"}), 200
-
-            return jsonify({"message": "Progress updated successfully!"}), 200
-        else:
-            return jsonify({"error": "Invalid data!"}), 400
-
-    elif request.method == "GET":
-        # Recupera o progresso de todos os vídeos, ignorando chaves irrelevantes
-        all_progress = {}
-        for key in redis_client.keys():
-            key_name = key.decode("utf-8")
-            if key_name.startswith("video:"):  # Supondo que você use um prefixo para as chaves de vídeo
-                value_type = redis_client.type(key).decode("utf-8")
-                if value_type == 'string':
-                    all_progress[key_name] = redis_client.get(key).decode("utf-8")
-                else:
-                    all_progress[key_name] = f"Value type is {value_type}, cannot decode."
-        return jsonify(all_progress), 200
-
 
 from .forms import MyForm
 from .tasks import add_user

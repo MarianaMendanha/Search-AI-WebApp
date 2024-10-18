@@ -43,7 +43,7 @@ class VideoContentManager(VideoContentManagerInterface):
         '''
 
         if check_alreay_exists:
-            prompt_content = self._get_prompt_content(video_id, raise_on_not_found=False)
+            prompt_content = self.__get_prompt_content(video_id, raise_on_not_found=False)
             if prompt_content is not None:
                 print(f'Prompt content already exists for video ID {video_id}.')
                 return prompt_content
@@ -70,7 +70,7 @@ class VideoContentManager(VideoContentManagerInterface):
         start_time = time.time()
         prompt_content = None
         while prompt_content is None:
-            prompt_content = self._get_prompt_content(video_id, raise_on_not_found=False)
+            prompt_content = self.__get_prompt_content(video_id, raise_on_not_found=False)
 
             if timeout_sec is not None and time.time() - start_time > timeout_sec:
                 print(f'Timeout of {timeout_sec} seconds reached. Exiting...')
@@ -81,7 +81,7 @@ class VideoContentManager(VideoContentManagerInterface):
 
         return prompt_content
     
-    def _get_prompt_content(self, video_id:str, raise_on_not_found:bool=True) -> Optional[dict]:
+    def __get_prompt_content(self, video_id:str, raise_on_not_found:bool=True) -> Optional[dict]:
         '''
         Calls the promptContent API
         Get the prompt content for the video.
