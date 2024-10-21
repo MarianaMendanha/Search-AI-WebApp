@@ -31,20 +31,29 @@ def process_video(self, video_name, description, language, newfilepath, content_
     doc_id=None
     client = config_video_indexer_client()
     
-    max_retries = 5  # Número máximo de tentativas de reconexão
+    max_retries = 3  # Número máximo de tentativas de reconexão
     retry_count = 0
     wait_time = 10  # Tempo de espera entre tentativas, em segundos
     
+    # Realiza o upload do vídeo e a geração do prompt
+    # video_name, _ = filename.split(".")
+    # video_id = client.upload_video(video_name, newfilepath, video_description=description, language=language, wait_for_index=True)
+    try:
+        video_id = client.upload_video(video_name=video_name, video_path_or_url=newfilepath, video_description=description, partition=partition, language=language)
+        # print(f"ID DO VIDEO --->{video_id}")
+    except Exception as e:
+        # Outras exceções que não são relacionadas a conexão
+        print(f"Erro durante o processamento de upload: {e}")
+        res = requests.post("http://127.0.0.1:5000/uploadVideo_status", json={"name": video_name, "progress": "Failed"})
+        return f"Video failed to upload!"
+            
     while retry_count < max_retries:
         try:
-            # Realiza o upload do vídeo e a geração do prompt
-            # video_name, _ = filename.split(".")
-            # video_id = client.upload_video(video_name, newfilepath, video_description=description, language=language, wait_for_index=True)
-            video_id = client.upload_video(video_name=video_name, video_path_or_url=newfilepath, video_description=description, partition=partition, language=language)
-            print(f"ID DO VIDEO --->{video_id}")
-    
+            
+            ## Implementar retry a partir daqui
             client.upload_video(video_id=video_id, video_name=video_name, language=language, op="wait")
             
+            # requests.post("http://127.0.0.1:5000/uploadVideo_status", json={"videoId": video_id, "name": video_name, "progress": "Generating"})
             content_prompt = client.generate_prompt(video_id, operation='get_prompt_content')
 
             # Salva o prompt em um arquivo JSON
@@ -58,6 +67,7 @@ def process_video(self, video_name, description, language, newfilepath, content_
             else:
                 manager.insert_into_index(content_path)
 
+            requests.post("http://127.0.0.1:5000/uploadVideo_status", json={"videoId": video_id, "name": video_name, "progress": "Finished"})
             return f"Video {video_id} processed successfully!"
         
         except (ConnectionError, Timeout) as e:
@@ -68,7 +78,10 @@ def process_video(self, video_name, description, language, newfilepath, content_
         except Exception as e:
             # Outras exceções que não são relacionadas a conexão
             print(f"Erro durante o processamento: {e}")
+            requests.post("http://127.0.0.1:5000/uploadVideo_status", json={"name": video_name, "progress": "Failed"})
             break
     
-    if retry_count == max_retries:
-        raise Exception("Não foi possível restabelecer a conexão após várias tentativas.")
+        if retry_count == max_retries:
+            raise Exception("Não foi possível restabelecer a conexão após várias tentativas.")
+    
+    

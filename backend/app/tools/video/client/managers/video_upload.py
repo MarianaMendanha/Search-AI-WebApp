@@ -98,6 +98,7 @@ class VideoUploadManager(VideoUploadManagerInterface):
         response.raise_for_status()
 
         if response.status_code != 200:
+            requests.post("http://127.0.0.1:5000/uploadVideo_status", json={"name": video_name, "progress": "Failed"})
             print(f'Request failed with status code: {response.status_code}')
 
         video_id = response.json().get('id')
