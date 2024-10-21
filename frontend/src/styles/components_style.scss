@@ -60,7 +60,7 @@
     width: 100%;
     display: flex;
     flex-direction: column;
-    height: 150px;
+    // height: 150px;
     gap: 5px;
   
     &__input {
@@ -140,49 +140,98 @@
   }
   
   /**** DocumentViewer.tsx ****/
+  // .viewer {
+  //   background-color: theme-color(primary);
+  //   height: calc(50vh - 10px);
+  //   overflow-x: scroll;
+  //   border-radius: 5px;
+  //   margin: 16px 0px 0px;
+  
+  //   &__list {
+  //     display: flex;
+  //     flex-direction: column;
+  //     gap: 5px;
+  //     padding: 5px 10px;
+  
+  //     &__item {
+  //       border-bottom: 1px solid theme-color(text-main);
+  //       height: 75px;
+  //       overflow: hidden;
+  
+  //       &:last-child {
+  //         border-bottom: none;
+  //       }
+  
+  //       &:first-child {
+  //         height: 40px;
+  //         border-bottom: 1px solid theme-color(text-main) !important;
+  //       }
+  //     }
+  //     &__header {
+  //       margin: 0;
+  //       font-size: 25px;
+  //     }
+  //     &__title {
+  //       text-align: left;
+  //       margin: 0;
+  //       font-size: 25px;
+  //     }
+  //     &__text {
+  //       text-align: left;
+  //       font-size: 12px;
+  //       margin: 0;
+  //       padding: 3px 0px;
+  //     }
+  //   }
+  // }
+
   .viewer {
-    background-color: theme-color(primary);
-    height: calc(50vh - 10px);
-    overflow-x: scroll;
-    border-radius: 5px;
-  
-    &__list {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-      padding: 5px 5px;
-  
-      &__item {
-        border-bottom: 1px solid theme-color(text-main);
-        height: 75px;
-        overflow: hidden;
-  
-        &:last-child {
-          border-bottom: none;
-        }
-  
-        &:first-child {
-          height: 40px;
-          border-bottom: 1px solid theme-color(text-main) !important;
-        }
+  background-color: theme-color(primary);
+  height: calc(50vh - 10px);
+  overflow-x: scroll;
+  border-radius: 5px;
+  margin: 16px 0px 0px;
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 5px 10px;
+
+    &__item {
+      border-bottom: 1px solid theme-color(text-main);
+      height: 75px;
+      overflow: hidden;
+      
+      &:last-child {
+        border-bottom: none;
       }
-      &__header {
-        margin: 0;
-        font-size: 25px;
-      }
-      &__title {
-        text-align: left;
-        margin: 0;
-        font-size: 25px;
-      }
-      &__text {
-        text-align: left;
-        font-size: 12px;
-        margin: 0;
-        padding: 3px 0px;
+
+      &:first-child {
+        height: 40px;
+        border-bottom: 1px solid theme-color(text-main) !important;
+        padding-bottom: 5px; // Personalização para o primeiro item
       }
     }
+
+    &__header {
+      margin: 0;
+      font-size: 25px;
+    }
+    &__title {
+      text-align: left;
+      margin: 0;
+      font-size: 25px;
+    }
+    &__text {
+      text-align: left;
+      font-size: 12px;
+      margin: 0;
+      padding: 3px 0px;
+    }
   }
+}
+
   
   /****  IndexQuery.tsx  ****/
   .query {

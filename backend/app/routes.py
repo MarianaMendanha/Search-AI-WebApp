@@ -19,7 +19,8 @@ import json, sys
 from dotenv import dotenv_values
 from pprint import pprint
 import redis
-
+import threading
+import time
 
 
 def config_video_indexer_client():
@@ -194,23 +195,30 @@ def upload_video_async():
         return jsonify({"error": str(e)}), 500
 
 redis_client = redis.StrictRedis(host='127.0.0.1', port=6380, db=0)
+def delete_key_after_delay(key, delay):
+    time.sleep(delay)
+    redis_client.delete(key)
 @main.route("/uploadVideo_status", methods=["GET","POST"])
 def upload_video_status():
     if request.method == "POST":
         data = request.get_json()
-        videoId = data.get("videoId")
+        # videoId = data.get("videoId")
         video_name = data.get("name")
         progress = data.get("progress")
         # print(f"No endpoint:{(video_name)}|{type(video_name)}:{progress}|{type(video_name)}")
 
-        if videoId and video_name and progress:
+        if video_name and progress:
             # Armazena ou atualiza o progresso no Redis
             redis_client.set(f"video:{video_name}", progress)
+            
+            # if progress == "Generating":
+            #     return jsonify({"message": f"Generating prompt content for video {video_name}"}), 200
 
             # Verifica se o progresso é 100% e apaga o registro se for o caso
-            if progress == "Finish":
+            if progress == "Exclude":
                 print("Upload Concluído")
-                redis_client.delete(f"video:{video_name}")
+                thread = threading.Thread(target=delete_key_after_delay, args=(f"video:{video_name}", 2))
+                thread.start()
                 return jsonify({"message": "Progress Completed and deleted!"}), 200
 
             return jsonify({"message": "Progress updated successfully!"}), 200

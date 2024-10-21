@@ -3,6 +3,7 @@ import { BeatLoader } from 'react-spinners';
 import insertDocument from '../apis/insertDocument';
 import VideoProgress from '../apis/VideoProgress';
 import React from 'react';
+import { Modal, Button } from 'react-bootstrap';
 
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
@@ -25,12 +26,16 @@ const DocumentUploader = ({ setRefreshViewer }: DocumentUploaderProps) => {
   const [isFilePicked, setIsFilePicked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [videoName, setVideoName] = useState<string>('');
+  const [isVideo, setIsVideo] = useState(false);
+  const [showProgress, setShowProgress] = useState(true);
+  const [showModal, setShowModal] = useState(false);
 
   const changeHandler = (event: HTMLInputEvent) => {
     if (event.target && event.target.files) {
       setSelectedFile(event.target.files[0]);
       setIsFilePicked(true);
       const nameWithoutExtension = event.target.files[0].name.split('.').slice(0, -1).join('.');
+      if (event.target.files[0].type.startsWith('video/')) { setIsVideo(true); } else { setIsVideo(false); }
       setVideoName(nameWithoutExtension);
       console.log(nameWithoutExtension);
     }
@@ -46,6 +51,18 @@ const DocumentUploader = ({ setRefreshViewer }: DocumentUploaderProps) => {
         setIsLoading(false);
       });
     }
+  };
+
+  const handleProgressFinished = (isFinished: boolean) => {
+    if (isFinished) {
+      setShowProgress(false); 
+      setShowModal(true);
+    }
+  };
+
+  const handleClose = () => {
+    setShowModal(false);
+    window.location.reload(); 
   };
 
   return (
@@ -89,12 +106,25 @@ const DocumentUploader = ({ setRefreshViewer }: DocumentUploaderProps) => {
       )}
 
       {isFilePicked && !isLoading && (
-        <button className='uploader__btn' onClick={handleSubmission}>
+        <button className='uploader__btn' onClick={handleSubmission} /* style={{ margin: "0px 0px 16px" }} */>
           Submit
         </button>
       )}
       {isLoading && <BeatLoader color='#00f596' css={loaderStyle}/>}
-      <VideoProgress videoName={videoName} />
+      {isVideo && showProgress && !isFilePicked && <VideoProgress videoName={videoName} onFinished={handleProgressFinished} />} 
+      {showModal && 
+        <Modal show={showModal} onHide={handleClose}>
+          <Modal.Header closeButton>
+            <Modal.Title>Upload Concluído</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>O upload do vídeo '{videoName}' foi concluído com sucesso!</Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={handleClose}>
+              Fechar
+            </Button>
+          </Modal.Footer>
+        </Modal>
+      }
     </div>
   );
 };
