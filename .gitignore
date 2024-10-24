@@ -13,6 +13,6 @@ backend/app/__pycache__/*
 # Ignorar diretório wait
 wait/*
 
-backend/app/saved_index/*
+backend/app/saved_index/* 
 backend/documents/*
 stored_documents.pkl
