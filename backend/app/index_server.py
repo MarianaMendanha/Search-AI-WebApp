@@ -51,28 +51,6 @@ load_dotenv()
 
 """ --- FIM DOS IMPORTS --- """
 
-"""  TESTANDO  """
-# text_list = ["text1", "text2", "..."]
-# documents = [Document(text=t) for t in text_list]
-
-# documents = SimpleDirectoryReader("docs/").load_data(True)
-
-# Ler documentos específicos:
-# documents = SimpleDirectoryReader(
-#     input_files=[r"\docs\examples\data\paul_graham\paul_graham_essay.txt"]
-# ).load_data()
-# documents = reader.load_data()
-# document = Document.example()
-# nodes = SentenceSplitter().get_nodes_from_documents(documents, True)
-# storage_context.docstore.add_documents(nodes)
-
-# print("PARTE 3")
-# index = VectorStoreIndex.from_documents(
-#     documents, storage_context, True
-# )
-
-"""  FIM DO TESTANDO  """
-
 def model_settings():
 
     llm = AzureOpenAI(
