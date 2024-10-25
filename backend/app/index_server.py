@@ -149,7 +149,7 @@ def initialize_index():
         try:
             index = VectorStoreIndex.from_vector_store(storage_context.vector_store)
             print("Index loaded from Cosmos DB.")
-            query_index("Qual é o meu nome?")
+            # query_index("Qual é o meu nome?")
         except Exception as e:
             print(f"Failed to load index from Cosmos DB: {e} \n Using local index")
             index = VectorStoreIndex(nodes=[])

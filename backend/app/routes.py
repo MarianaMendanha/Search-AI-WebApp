@@ -77,7 +77,10 @@ def upload_file():
         filename = secure_filename(uploaded_file.filename)
         print(filename)
         diretorio_atual = os.getcwd()
-        filepath = os.path.join(diretorio_atual, 'documents', os.path.basename(filename))
+        upload_folder = 'uploads/'
+        os.makedirs(upload_folder, exist_ok=True)
+        # filepath = os.path.join(diretorio_atual, 'documents', os.path.basename(filename))
+        filepath = os.path.join(diretorio_atual, upload_folder, uploaded_file.filename)
         print(filepath)
 
         uploaded_file.save(filepath)
